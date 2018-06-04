@@ -171,3 +171,34 @@ parseInt第二个参数是2的时候，表示按二进制转换，但是很遗�
 	var add6 = curry(add3)(2)(4);  
 	add6(8); // 14
 
+更新add方法：
+
+我在书上看到了一个add方法，可以计算出任意参数的add
+
+	add(1,2,3,4);
+	add(1)(2)(3)(4);
+	add(1,2)(3,4);
+	add(1,2,3)(4);
+
+代码如下：[https://github.com/beat-the-buzzer/functional-programming/blob/master/add.js](https://github.com/beat-the-buzzer/functional-programming/blob/master/add.js)
+
+add方法必须返回一个函数，但是我们的目标是计算累加值，所以使用了重写toString的方式，来计算累加值。
+
+	function add() {
+		var _args = [].slice.call(arguments);
+		var adder = function() {
+			// 将参数用闭包捕获 _args
+			var _adder = function() {
+				_args.push(...arguments);
+				return _adder;
+			};
+			_adder.toString = function() {
+				return _args.reduce(function(a, b) {
+					return a + b;
+				});
+			}
+			return _adder;
+		}
+		return adder(..._args);
+	}
+
