@@ -8,7 +8,7 @@ const curry = (fn) => {
 	}
 	return function curriedFn(...args) {
 		if (args.length < fn.length) {
-			return function() {
+			return function () {
 				return curriedFn.apply(null, args.concat(
 					[].slice.call(arguments)
 				))
@@ -27,10 +27,10 @@ addMore(1, 2, 3);
 addMore(1, 2, 3, 4, 5);
 
 
-function add3(a, b, c) { return a + b + c; }  
+function add3(a, b, c) { return a + b + c; }
 add3(2, 4, 8); // 14
 
 var add6 = add3.bind(this, 2, 4);
 add6(8); // 14
-var add6 = curry(add3)(2)(4);  
+var add6 = curry(add3)(2)(4);
 add6(8); // 14

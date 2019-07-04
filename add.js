@@ -1,19 +1,19 @@
 function add() {
-	var _args = [].slice.call(arguments);
-	var adder = function() {
-		// 将参数用闭包捕获 _args
-		var _adder = function() {
-			_args.push(...arguments);
-			return _adder;
+	var args = [].slice.call(arguments);
+	var adder = function () {
+		// 将参数用闭包捕获 args
+		var adder_temp = function () {
+			args.push(...arguments);
+			return adder_temp;
 		};
-		_adder.toString = function() {
-			return _args.reduce(function(a, b) {
+		adder_temp.toString = function () {
+			return args.reduce(function (a, b) {
 				return a + b;
 			});
 		}
-		return _adder;
+		return adder_temp;
 	}
-	return adder(..._args);
+	return adder(...args);
 }
 
 // add方法必须返回一个函数，但是我们的目标是计算累加的值
