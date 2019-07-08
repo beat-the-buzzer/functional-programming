@@ -233,7 +233,7 @@ function add() {
   var adder = function() {
     // 将参数用闭包捕获 args
     var adder_temp = function() {
-    args.push(...arguments);
+      args.push(...arguments);
       return adder_temp;
     };
     adder_temp.toString = function() {
@@ -253,6 +253,123 @@ console.log(+a); // 10
 console.log(b.toString()); // 10
 console.log(`${c}`); // 10
 ```
+
+下面来实现一个高阶函数，这是我平时工作的时候遇到的一个新需求。
+
+看下面这段代码，是我们项目中已有的调用接口的方式，我们在调用接口的时候，需要在我们自己的业务模块里面处理数据，例如，把GRID0的每一项进行分割。
+
+```js
+function getData(onSend, success, error, other) {
+  var res = {
+    data: {
+      success: true,
+      msg: '假设返回的数据',
+      GRID0: [
+        '123|456|789',
+        'abc|def|ghi'
+      ],
+      KEY1INDEX: 0,
+      KEY2INDEX: 1,
+      KEY3INDEX: 2
+    }
+  };
+  success(res);
+}
+getData({}, function(data) {
+  // 处理数据
+});
+```
+
+现在我们要把处理数据的代码写在公共的部分，也就是说，在调用接口的时候，成功的回调里面直接就能拿到处理后的数据。我觉得这样的需求，很适合用高阶函数。我们的目标是：`HOFgetData(getData)`这个函数，第二个参数是个回调函数，我们要让这个回调函数的参数变成我们想要的数据格式。下面我将一一实现。
+
+1、我们定义的HOFgetData传入一个函数，返回一个新的函数：
+
+```js
+function HOFgetData () {
+  var args = [].slice.call(arguments);
+  var newFunc = function (obj, success) {
+    args[0].call(null, obj, success);
+  }
+  return newFunc;
+}
+```
+
+这段代码，就是实现不做任何操作的高阶函数。
+
+2、我们要对成功的回调函数进行处理，说具体点，就是成功的回调函数的参数。所以，我又写了一个高阶函数，来处理成功的回调函数，使得`hofsuccess(success)`的参数是我们需要的数据格式。
+
+hofsuccess也是传入一个函数，返回一个新函数：
+
+```js
+var hofsuccess = function () {
+  var tempFunc = [].slice.call(arguments); // 传入的success函数
+  return function () {
+    var temp = [].slice.call(arguments); // 得到success的参数，就是返回值
+    var data = temp[0].data;
+    // 处理数组GRID0
+    var LIST0 = data.GRID0.map(value => {
+      var item = value.split('|');
+      return {
+        KEY1: item[data.KEY1INDEX],
+        KEY2: item[data.KEY2INDEX],
+        KEY3: item[data.KEY3INDEX]
+      }
+    });
+    var obj = {
+      LIST0: LIST0,
+      msg: data.msg
+    };
+    tempFunc[0](obj);
+  }
+};
+```
+
+3、HOFgetData里面取调用新的成功的回调：
+
+```js
+var newFunc = function (obj, success) {
+  args[0].call(null, obj, hofsuccess(success));
+}
+```
+
+4、调用新的函数
+
+```js
+var obj = {
+  param: 'param'
+};
+
+/*
+* 高阶函数赋值，得到的newGetData是个函数，并且这个函数的参数个getData一样
+* 这里第二个参数在HOFgetData内部做了高阶函数处理，使得返回的结果是处理后的数据结构
+*/
+var newGetData = HOFgetData(getData);
+
+newGetData(obj, function (data) {
+  console.log(data);
+});
+```
+
+返回的结果是：
+
+```js
+{ 
+  LIST0: [{
+    KEY1: "123", 
+    KEY2: "456", 
+    KEY3: "789"
+  }, {
+    KEY1: "abc", 
+    KEY2: "def", 
+    KEY3: "ghi"
+  }], 
+  msg: "假设返回的数据"
+}
+```
+
+[点击查看完整代码整合](https://github.com/beat-the-buzzer/functional-programming/blob/master/hof.js)
+
+得到的newGetData就是我们想要的新的调用函数的方法，并且，这个方法对原有的功能不会造成影响。
 
 以上就是我想要讲的关于函数式编程的所有内容，如果能弄懂上面的add函数，相信你会对函数、闭包这一类的概念有了更深的理解。建议大家在以后学习React的时候，试着去写一些高阶组件，相信不会太难理解。
 
