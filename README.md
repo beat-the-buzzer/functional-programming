@@ -371,5 +371,44 @@ newGetData(obj, function (data) {
 
 得到的newGetData就是我们想要的新的调用函数的方法，并且，这个方法对原有的功能不会造成影响。
 
+下面还有一个高阶函数的应用，可以应用在平时的工作中。
+
+经常会有这样的业务场景：查询某一天的历史数据。下面，我将实现一个缓存效果，曾经访问过的值暂时缓存起来。当然，不是使用localStorage或者sessionStorage，而是高阶函数的方式。
+
+```js
+var data = 0; // 模拟数据
+function postData(date) {
+  // ... 省略逻辑
+  console.log('发送请求，得到数据');
+  var result = (++data) + ':' + date; // 模拟数据
+  return result;
+}
+
+// 定义的高阶函数，传入的参数是一个函数，返回一个新的函数
+function superPostData(fn) {
+  var cache = {}; // 缓存的对象
+  return function() {
+    var args = [].slice.call(arguments);
+    var cachedItem = cache[args[0]];
+    if(cachedItem) {
+      console.log('从缓存中取数据');
+      return cachedItem;
+    } else {
+      cache[args[0]] = fn.apply(fn, args); // 缓存结果
+      return cache[args[0]];
+    }
+  }
+}
+
+var newPostData = superPostData(postData); // 使用高阶函数，产生一个新的函数
+newPostData('20190101'); // 发送请求，得到数据
+newPostData('20190102'); // 发送请求，得到数据
+newPostData('20190101'); // 从缓存中取数据
+```
+
+[点击查看完整代码整合](https://github.com/beat-the-buzzer/functional-programming/blob/master/cache.js)
+
+从例子中，我们可以看到，第一次查询20190101的数据，缓存里没有，于是调用接口，得到数据并缓存；然后，查询20190102的数据，缓存里也没有，于是调用接口，得到数据并缓存。当我们再次查询20190101的数据，发现缓存里有这条数据，于是直接取出来，这样就减少了http请求，提升了性能。
+
 以上就是我想要讲的关于函数式编程的所有内容，如果能弄懂上面的add函数，相信你会对函数、闭包这一类的概念有了更深的理解。建议大家在以后学习React的时候，试着去写一些高阶组件，相信不会太难理解。
 
